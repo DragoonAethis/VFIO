@@ -1,0 +1,12 @@
+[connection]
+id=bridge0 slave 1
+uuid=ad76fa5e-5e8f-41b0-8b88-c2511fd273b2
+type=ethernet
+interface-name=enp0s1234
+master=bridge0
+permissions=
+slave-type=bridge
+
+[ethernet]
+mac-address=01:23:45:67:89:AF
+mac-address-blacklist=

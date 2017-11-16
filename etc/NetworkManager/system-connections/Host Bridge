@@ -1,0 +1,21 @@
+[connection]
+id=Host Bridge
+uuid=0d308e5c-59c5-438a-985b-4a514bfc5451
+type=bridge
+interface-name=bridge0
+permissions=
+timestamp=1499897474
+
+[bridge]
+stp=false
+
+[ipv4]
+dns=8.8.8.8;8.8.4.4;
+dns-search=
+method=auto
+
+[ipv6]
+addr-gen-mode=stable-privacy
+dns-search=
+ip6-privacy=0
+method=auto

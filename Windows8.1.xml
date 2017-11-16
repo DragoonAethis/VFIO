@@ -1,4 +1,4 @@
-<domain type='kvm'>
+<domain type='kvm' xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'>
   <name>Windows8.1</name>
   <uuid>c5f35a6b-8ae6-4b46-ae51-90e7b72ba602</uuid>
   <title>Windows 8.1</title>
@@ -89,6 +89,11 @@
       <target chassisNr='2'/>
       <address type='pci' domain='0x0000' bus='0x01' slot='0x00' function='0x0'/>
     </controller>
+    <controller type='pci' index='3' model='pcie-root-port'>
+      <model name='pcie-root-port'/>
+      <target chassis='3' port='0x8'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x0'/>
+    </controller>
     <controller type='sata' index='0'>
       <address type='pci' domain='0x0000' bus='0x00' slot='0x1f' function='0x2'/>
     </controller>
@@ -98,16 +103,15 @@
       <model type='virtio'/>
       <address type='pci' domain='0x0000' bus='0x02' slot='0x01' function='0x0'/>
     </interface>
-    <channel type='unix'>
+    <channel type='unix'><!-- QEMU Guest Agent, for rebooting/stopping the VM from the host. -->
       <target type='virtio' name='org.qemu.guest_agent.0'/>
       <address type='virtio-serial' controller='0' bus='0' port='2'/>
     </channel>
-    <channel type='spicevmc'><!-- Spice Protocol, used for virt-manager tools. -->
-      <target type='virtio' name='com.redhat.spice.0'/>
-      <address type='virtio-serial' controller='0' bus='0' port='1'/>
-    </channel>
     <input type='mouse' bus='ps2'/>
     <input type='keyboard' bus='ps2'/>
+    <sound model='ich9'><!-- ICH9 audio works fine under Windows 8.1 with "stock" drivers -->
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x1b' function='0x0'/>
+    </sound>
     <hostdev mode='subsystem' type='pci' managed='yes'><!-- NVIDIA GPU (Main Device) -->
       <source>
         <address domain='0x0000' bus='0x01' slot='0x00' function='0x0'/>
@@ -143,5 +147,9 @@
     </hostdev>
     <memballoon model='none'/><!-- Memory balloon disabled, slows down memory-intensive apps. -->
   </devices>
+  <qemu:commandline>
+    <qemu:env name='QEMU_AUDIO_DRV' value='pa'/><!-- Use PulseAudio for ICH9 output -->
+    <qemu:env name='QEMU_PA_SERVER' value='127.0.0.1'/><!-- Using the IP address uses TCP, not Unix, sockets! -->
+  </qemu:commandline>
 </domain>
 

@@ -17,35 +17,48 @@ vfio_synergy() {
 vfio_switch_displays() {
 	echo "Switching outputs..."
 	xrandr --output HDMI2 --off
-	xrandr --output DP1 --mode 1920x1080 --pos 0x0 --primary
-	xrandr --output DP1 --set "Broadcast RGB" "Full"
+	xrandr --output HDMI1 --mode 1920x1080 --pos 0x0 --primary
+	xrandr --output HDMI1 --set "Broadcast RGB" "Full"
 }
 
 vfio_restore_displays() {
 	echo "Restoring outputs..."
 	xrandr --output HDMI2 --mode 1920x1080 --pos 0x0 --primary
-	xrandr --output DP1 --mode 1920x1080 --pos 1920x0
-	xrandr --output DP1 --set "Broadcast RGB" "Full"
+	xrandr --output HDMI2 --set "Broadcast RGB" "Full"
+	xrandr --output HDMI1 --mode 1920x1080 --pos 1920x0
+	xrandr --output HDMI1 --set "Broadcast RGB" "Full"
 }
 
 # THIS DOESN'T WORK YET, DO NOT TRY THIS AT HOME.
-gpu_rebind() {
-	echo 1 > /sys/bus/pci/devices/0000:01:00.0/remove
-	echo 1 > /sys/bus/pci/devices/0000:01:00.1/remove
-	echo 1 > /sys/bus/pci/rescan
+# Force remove the GPU from the system, then rescan the PCI bus.
+gpu_redetect() {
+	echo -n "1" > /sys/bus/pci/devices/0000:01:00.0/remove
+	echo -n "1" > /sys/bus/pci/devices/0000:01:00.1/remove
+	echo -n "1" > /sys/bus/pci/rescan
 }
 
 # THIS DOESN'T WORK YET, DO NOT TRY THIS AT HOME.
+# Force unbind both GPU devices from the system. **WILL CRASH X.ORG!**
 gpu_unbind() {
-	echo "10de 1b81" > /sys/bus/pci/drivers/vfio-pci/new_id
-	echo "0000:01:00.0" > /sys/bus/pci/devices/0000:01:00.0/driver/unbind
-	echo "0000:01:00.0" > /sys/bus/pci/drivers/vfio-pci/bind
-	echo "10de 1b81" > /sys/bus/pci/drivers/vfio-pci/remove_id
+	echo -n "0000:01:00.0" > /sys/bus/pci/devices/0000:01:00.0/driver/unbind
+	echo -n "0000:01:00.1" > /sys/bus/pci/devices/0000:01:00.1/driver/unbind
+}
 
-	echo "10de 10f0" > /sys/bus/pci/drivers/vfio-pci/new_id
-	echo "0000:01:00.1" > /sys/bus/pci/devices/0000:01:00.1/driver/unbind
-	echo "0000:01:00.1" > /sys/bus/pci/drivers/vfio-pci/bind
-	echo "10de 10f0" > /sys/bus/pci/drivers/vfio-pci/remove_id
+
+# THIS DOESN'T WORK YET, DO NOT TRY THIS AT HOME.
+# Bind both GPU devices to the nouveau driver. **WILL CRASH X.ORG!**
+gpu_bind_nouveau() {
+	modprobe nouveau
+	echo -n "0000:01:00.0" > /sys/bus/pci/drivers/nouveau/bind
+	echo -n "0000:01:00.1" > /sys/bus/pci/drivers/nouveau/bind
+}
+
+# THIS DOESN'T WORK YET, DO NOT TRY THIS AT HOME.
+# Bind both GPU devices to the nouveau driver.
+gpu_bind_vfio() {
+	modprobe vfio-pci
+	echo -n "0000:01:00.0" > /sys/bus/pci/drivers/vfio-pci/bind
+	echo -n "0000:01:00.1" > /sys/bus/pci/drivers/vfio-pci/bind
 }
 
 hdd_ro() {

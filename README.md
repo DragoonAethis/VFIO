@@ -5,9 +5,8 @@ configuring the GPU passthrough and the guest VM. Essentially, native-level
 performance for games in Windows, without dual booting. This was done on Arch
 Linux, on other distros your mileage may vary (especially with outdated QEMU).
 
-If you'd like to try such a setup yourself, [try this ArchWiki page](https://wiki.archlinux.org/index.php/PCI_passthrough_via_OVMF).
-
-My setup is described a bit better on [the VFIO examples page](https://wiki.archlinux.org/index.php?title=PCI_passthrough_via_OVMF/Examples).
+- If you'd like to try such a setup yourself, [try this ArchWiki page](https://wiki.archlinux.org/index.php/PCI_passthrough_via_OVMF).
+- My setup is described a bit better on [the VFIO examples page](https://wiki.archlinux.org/index.php?title=PCI_passthrough_via_OVMF/Examples).
 
 The vfio.sh is sourced in my .bashrc, so that I can just run `vfio_winvm` and
 that's it. Passing any extra argument to vfio_winvm skips switching displays.
@@ -90,7 +89,8 @@ contiguous, free 1GB blocks of memory to allocate. To fix this, reboot your
 computer and run the VM right after your system has started. Once allocated,
 you can keep using both the VM and host normally (hugepages aren't getting
 deallocated on VM shutdown, since I might want to restart it or something -
-`vfio_disable_hugepages` does so).
+`vfio_disable_hugepages` does so, but once you run that, you probably won't be
+able to allocate these pages again until reboot).
 
 
 ## Message-Signalled Interrupts
@@ -111,7 +111,15 @@ Checking whenever a device has MSI enabled:
 Also, driver updates tend to disable MSI, so visit that utility periodically.
 
 
-## PulseAudio Setup
+## PulseAudio Setup (Legacy)
+
+I've fixed a couple of other things preventing me from running QEMU as my own
+user account, so I don't need to do the stuff below anymore (QEMU_PA_SERVER now
+points at the local Unix socket). For documentation purposes, my previous setup
+is still documented below. This lets you run QEMU as nobody/nogroup and still
+have working audio, with minimal extra latency.
+
+---
 
 Finally got PulseAudio to work flawlessly - normally, QEMU needs to be run as
 the user owning the running PA server. This breaks a few other things though,
@@ -154,24 +162,43 @@ Then, under the `<devices>...</devices>` section, put this:
 actually reloaded the default.pa config file (with `pactl list-modules`), for
 everything to start working.
 
-If your audio occasionally gets a bit Decepticon-ish, you might need a patched
-QEMU build - there's a QEMU fork with a new PulseAudio backend that's way less
+**As of QEMU 3.0** you also need to make sure your emulated machine is at least
+`pc-q35-3.0` or newer (in libvirt's XML files, the line to edit is
+`<type arch='x86_64' machine='pc-q35-3.0'>hvm</type>`). Some improvements were
+made to the emulated audio card, but they'll only be enabled if you explicitly
+ask for the latest machine model. (Latest machine type is `pc-q35-3.1` and is
+perfectly fine, too.)
+
+If your audio still gets a bit Decepticon-ish, you might need a patched QEMU
+build - there's a QEMU fork with a new PulseAudio backend that's way less
 glitchy, [made by Spheenik](https://github.com/spheenik/qemu/). Arch users can
-use [this AUR package](https://aur.archlinux.org/packages/qemu-patched) which uses those patches on the latest QEMU version.
+use [this AUR package](https://aur.archlinux.org/packages/qemu-patched) which
+uses those patches on the latest QEMU version. Also see the note on Linux-ck
+below, if you're using that.
 
 
-## Nvidia driver (un)loading
+## Linux-ck Stuttering
 
-To cleanly unload the Nvidia driver:
+For a long while I've used the [CK patchset](https://ck-hack.blogspot.com/) for
+its superb desktop responsiveness under high I/O load. For some reason, recent
+versions (since MuQSS introduction?) introduced very nasty stuttering in gaming
+VMs that ranges from irritating to deal-breaking. Vanilla kernel doesn't do any
+of this, and the I/O scheduler that made responsiveness so good on HDDs (BFQ)
+is available as well (it wasn't when I've started to use Linux-ck).
 
-    sudo /etc/init.d/nvidia-smi stop > /dev/null
-    sudo rmmod nvidia
+So, if you're using Linux-ck and experiencing insane stuttering, try vanilla
+kernel instead. (Would be nice to test with `linux-clear` one day...)
 
-And to load it back:
 
-    sudo modprobe nvidia
-    sudo /etc/init.d/nvidia-smi start > /dev/null
+## Using NVIDIA GPU on the host
 
-Just unbinding the driver from the GPU may crash the system, be careful. The
-Library.sh script contains some helper functions for unbinding/rebinding, but
-they're not really finished and I'm not in a rush to get these working, so...
+If you're not planning on gaming for a bit, you may want to switch your host to
+the NVIDIA GPU temporarily. [nvidia-xrun](https://github.com/Witko/nvidia-xrun)
+provides configuration and helper scripts to run X.org on the NVIDIA GPU with a
+separate command and separate `.xinitrc` called `.nvidia-xrun`.
+
+On my system, `.nvidia-xrun` basically contains the same stuff as `.xinitrc`,
+so that it starts the same desktop environment, uses same config files, etc.
+To run it, you'll need to `sudo rmmod vfio-pci` first, and then `nvidia-xrun`
+(it automatically loads the NVIDIA kernel driver and sets up everything you
+need, aside from unloading the vfio-pci driver).

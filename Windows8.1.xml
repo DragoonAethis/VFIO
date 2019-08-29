@@ -2,8 +2,13 @@
   <name>Windows8.1</name>
   <uuid>c5f35a6b-8ae6-4b46-ae51-90e7b72ba602</uuid>
   <title>Windows 8.1</title>
-  <memory unit='KiB'>10485760</memory>
-  <currentMemory unit='KiB'>10485760</currentMemory>
+  <metadata>
+    <libosinfo:libosinfo xmlns:libosinfo="http://libosinfo.org/xmlns/libvirt/domain/1.0">
+      <libosinfo:os id="http://microsoft.com/win/8.1"/>
+    </libosinfo:libosinfo>
+  </metadata>
+  <memory unit='KiB'>16777216</memory>
+  <currentMemory unit='KiB'>16777216</currentMemory>
   <memoryBacking>
     <hugepages/><!-- Uses 1GB hugepages for VM memory -->
     <nosharepages/>
@@ -26,7 +31,7 @@
     <iothreadpin iothread='1' cpuset='0,4'/>
   </cputune>
   <os>
-    <type arch='x86_64' machine='pc-q35-3.1'>hvm</type>
+    <type arch='x86_64' machine='pc-q35-4.0'>hvm</type>
     <loader readonly='yes' type='pflash'>/usr/share/ovmf/ovmf_code_x64.bin</loader>
     <nvram>/var/lib/libvirt/qemu/nvram/Windows8.1_VARS.fd</nvram>
     <bootmenu enable='no'/>
@@ -54,6 +59,7 @@
       <hidden state='on'/>
     </kvm>
     <vmport state='off'/>
+    <ioapic driver='kvm'/>
   </features>
   <cpu mode='host-passthrough' check='none'>
     <topology sockets='1' cores='3' threads='2'/>
@@ -66,7 +72,7 @@
   </clock>
   <on_poweroff>destroy</on_poweroff>
   <on_reboot>restart</on_reboot>
-  <on_crash>restart</on_crash>
+  <on_crash>destroy</on_crash>
   <pm>
     <suspend-to-mem enabled='yes'/>
     <suspend-to-disk enabled='no'/>
@@ -136,7 +142,7 @@
     </channel>
     <input type='mouse' bus='ps2'/>
     <input type='keyboard' bus='ps2'/>
-    <sound model='ich6'><!-- ICH6 audio works fine under Windows 8.1 with "stock" drivers -->
+    <sound model='ich9'><!-- ICH9 audio works fine under Windows 8.1 with "stock" drivers -->
       <codec type='micro'/><!-- Micro exposes Speaker/Microphone instead of Line Out/In, fixes VoIP issues -->
       <address type='pci' domain='0x0000' bus='0x00' slot='0x1b' function='0x0'/>
     </sound>
@@ -174,9 +180,9 @@
     </shmem>
   </devices>
   <qemu:commandline>
-    <qemu:env name='QEMU_AUDIO_DRV' value='pa'/><!-- Use PulseAudio for ICH6 output -->
-    <qemu:env name='QEMU_PA_SERVER' value='/run/user/1000/pulse/native'/>
-    <qemu:env name='QEMU_AUDIO_TIMER_PERIOD' value='200'/>
+    <!-- Use the new audiodev for audio output -->
+    <qemu:arg value='-audiodev'/>
+    <qemu:arg value='pa,id=pa1,server=/run/user/1000/pulse/native'/>
   </qemu:commandline>
 </domain>
 

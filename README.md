@@ -1,3 +1,14 @@
+**Warning:** I no longer use VFIO. All of these instructions and configs are
+up to date as of this writing, plus feel free to ask questions in issues/via
+mail if you aren't sure about something, but it'll no longer be updated.
+
+Instead of VFIO I just use a normal dual boot, since the VM overhead starts
+to become a problem in newer games with an older CPU I have, and the primary
+reason I've used VFIO (Windows + Linux development box, side by side, with
+little to no compromises) is no more. And I mostly play on Linux nowadays :D
+
+---
+
 # VFIO Setup
 
 Files in this repository are my scripts, notes and "all the helper stuff" for
